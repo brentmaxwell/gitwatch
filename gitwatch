@@ -34,7 +34,7 @@ else
   git clone --depth=1 --bare --branch "$BRANCH" \
     -c remote.origin.fetch='+refs/heads/*:refs/heads/*' \
     "$URL" "$CACHE_DIR" || die "gw: git clone failed"
-  git --git-dir="$CACHE_DIR" show-ref -s \
+  git --git-dir="$CACHE_DIR" show-ref -s "$BRANCH" \
     > "$OLD_COMMIT_PATH" || die "gw: failed to get latest commit"
 fi
 
@@ -42,7 +42,8 @@ fi
 
 OLD_COMMIT=$(cat "$OLD_COMMIT_PATH")
 
-git rev-list --full-history --parents  "$OLD_COMMIT..$BRANCH" |
+git --git-dir="$CACHE_DIR" rev-list --full-history --parents \
+  "$OLD_COMMIT..$BRANCH" |
   sed 's/^\([^ ]\+\) \([^ ]\+\) \([^ ]\+\)$/\1 \2\n\1 \3/' |
   head -n -1 | while read from_sha1 to_sha1
   do
@@ -59,5 +60,5 @@ git rev-list --full-history --parents  "$OLD_COMMIT..$BRANCH" |
     )
   done
 
-git --git-dir="$CACHE_DIR" show-ref -s \
+git --git-dir="$CACHE_DIR" show-ref -s "$BRANCH" \
   > "$OLD_COMMIT_PATH" || die "gw: failed to get latest commit"
