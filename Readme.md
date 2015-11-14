@@ -10,9 +10,10 @@ changes to btrfs code in linux kernel:
 
 gitwatch runs `grep ...` once for each new change since the last time it
 was run. If it's the first time, it will only clone the repo without
-running the command. The command is fed the output of `git diff`. Some
-other environmental variables are also set (see the comment on top of
-the script).
+running the command. The command is fed the output of `git diff`.
+`$GW_TO` is the commit that introduced the change. Some other
+environmental variables are also set (see the comment on top of the
+script).
 
 Let's install an hourly cron job on the hour to automate this:
 
