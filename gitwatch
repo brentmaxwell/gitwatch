@@ -30,10 +30,10 @@ if [ -d "$GIT_DIR" ]
 then
   unset DEPTH
   cd "$GIT_DIR" || die "gw: cannot cd to git dir"
-  git branch | grep -Pq '^[\s*]+'"$BRANCH"'$' 1>&2 || DEPTH='--depth=5'
+  git branch | grep -Pq '^[\s*]+'"$BRANCH"'$' 1>&2 || DEPTH='--depth=1'
   git fetch $DEPTH origin "$BRANCH" 1>&2 || die "gw: git fetch failed"
 else
-  git clone --depth=5 --bare --branch "$BRANCH" \
+  git clone --depth=1 --bare --branch "$BRANCH" \
     -c remote.origin.fetch='+refs/heads/*:refs/heads/*' \
     "$URL" "$GIT_DIR" 1>&2 || die "gw: git clone failed"
   git --git-dir="$GIT_DIR" show-ref -s "$BRANCH" > "$OLD_COMMIT_PATH" ||
