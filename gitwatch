@@ -3,6 +3,12 @@
 # Copyright (C) 2015 Mansour Behabadi <mansour@oxplot.com>
 #
 # Usage: gitwatch <repo-url> <branch> <cmd> [<arg> [<arg> ...]]
+#
+# <cmd> recieves the diff of each commit in its stdin
+# Following env variables are set for <cmd>:
+#   GW_FROM, GW_TO:     commit hashes for which diff is output
+#   GW_URL,  GW_BRANCH: repo's URL and branch as passed to gitwatch
+#   GW_GIT_DIR:         local clone's git directory
 
 URL="$1"
 BRANCH="$2"
@@ -44,7 +50,7 @@ git rev-list --full-history --parents \
   while read to_sha1 from_sha1
   do
     git diff "$from_sha1".."$to_sha1" |
-      GW_FROM="$from_sha1" GW_TO="$to_sha1" \
+      GW_FROM="$from_sha1" GW_TO="$to_sha1" GW_GIT_DIR="$GIT_DIR" \
       GW_BRANCH="$BRANCH" GW_URL="$URL" sh -c "$CMD"
   done
 
