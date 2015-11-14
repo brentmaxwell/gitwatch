@@ -12,7 +12,7 @@
 
 if [ "$#" -lt 3 ]
 then
-  echo 'Usage: gitwatch <repo-url> <branch> <cmd> [<arg> [<arg> ...]]'
+  echo 'Usage: gitwatch <repo-url> <branch> <cmd> [<arg> ...]' 1>&2
   exit 1
 fi
 
