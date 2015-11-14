@@ -1,6 +1,7 @@
 #!/bin/sh
 # gitwatch - Watch a git repository for changes
 # Copyright (C) 2015 Mansour Behabadi <mansour@oxplot.com>
+# MIT license, see License.md
 #
 # Usage: gitwatch <repo-url> <branch> <cmd> [<arg> [<arg> ...]]
 #
