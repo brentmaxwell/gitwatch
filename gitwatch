@@ -10,6 +10,12 @@
 #   GW_URL,  GW_BRANCH: repo's URL and branch as passed to gitwatch
 #   GW_GIT_DIR:         local clone's git directory
 
+if [ "$#" -lt 3 ]
+then
+  echo 'Usage: gitwatch <repo-url> <branch> <cmd> [<arg> [<arg> ...]]'
+  exit 1
+fi
+
 URL="$1"
 BRANCH="$2"
 shift 2
