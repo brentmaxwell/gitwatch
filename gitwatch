@@ -8,57 +8,45 @@ URL="$1"
 BRANCH="$2"
 shift 2
 CMD="$@"
-DEPTH=
 
 function die { echo "$@" 1>&2; exit 1; }
 
 if [ "$GW_CACHE" = "" ]; then GW_CACHE=~/.cache/gitwatch; fi
 
-CACHE_DIR="$GW_CACHE/$(echo -n "$URL" | md5sum | tr -cd 'a-f0-9')"
-OLD_COMMIT_PATH="$CACHE_DIR/old-commit-$BRANCH"
+GIT_DIR="$GW_CACHE/$(echo -n "$URL" | md5sum | tr -cd 'a-f0-9')"
+OLD_COMMIT_PATH="$GIT_DIR/old-commit-$BRANCH"
 
 # Updating local cache
 
-mkdir -p $(dirname "$CACHE_DIR") || die "gw: failed to create cache dir"
+mkdir -p $(dirname "$GIT_DIR") || die "gw: failed to create cache dir"
 
-if [ -d "$CACHE_DIR" ]
+if [ -d "$GIT_DIR" ]
 then
-  if ! (git --git-dir="$CACHE_DIR" branch |
-        grep -Pq '^[\s*]+'"$BRANCH"'$') 2>/dev/null 1>&2
-  then
-    DEPTH='--depth=1'
-  fi
-  git --git-dir="$CACHE_DIR" fetch $DEPTH origin "$BRANCH" ||
-    die "gw: git fetch failed"
+  unset DEPTH
+  cd "$GIT_DIR" || die "gw: cannot cd to git dir"
+  git branch | grep -Pq '^[\s*]+'"$BRANCH"'$' 1>&2 || DEPTH='--depth=5'
+  git fetch $DEPTH origin "$BRANCH" 1>&2 || die "gw: git fetch failed"
 else
-  git clone --depth=1 --bare --branch "$BRANCH" \
+  git clone --depth=5 --bare --branch "$BRANCH" \
     -c remote.origin.fetch='+refs/heads/*:refs/heads/*' \
-    "$URL" "$CACHE_DIR" || die "gw: git clone failed"
-  git --git-dir="$CACHE_DIR" show-ref -s "$BRANCH" \
-    > "$OLD_COMMIT_PATH" || die "gw: failed to get latest commit"
+    "$URL" "$GIT_DIR" 1>&2 || die "gw: git clone failed"
+  git --git-dir="$GIT_DIR" show-ref -s "$BRANCH" > "$OLD_COMMIT_PATH" ||
+    die "gw: failed to get latest commit"
 fi
 
 # Diffing
 
-OLD_COMMIT=$(cat "$OLD_COMMIT_PATH")
+cd "$GIT_DIR" || die "gw: cannot cd to git dir"
 
-git --git-dir="$CACHE_DIR" rev-list --full-history --parents \
-  "$OLD_COMMIT..$BRANCH" |
+git rev-list --full-history --parents \
+  "$(cat "$OLD_COMMIT_PATH")..$BRANCH" | grep ' ' |
   sed 's/^\([^ ]\+\) \([^ ]\+\) \([^ ]\+\)$/\1 \2\n\1 \3/' |
-  head -n -1 | while read from_sha1 to_sha1
+  while read to_sha1 from_sha1
   do
-    (
-      export GW_URL="$URL"
-      export GW_BRANCH="$BRANCH"
-      export GW_FROM="$from_sha1"
-      export GW_TO="$to_sha1"
-      export GW_DIFF=$(mktemp)
-      git --git-dir="$CACHE_DIR" diff "$from_sha1".."$to_sha1" \
-        > "$GW_DIFF" || echo "gw: diff failed - skipping"
-      "$CMD"
-      rm -f "$GW_DIFF"
-    )
+    git diff "$from_sha1".."$to_sha1" |
+      GW_FROM="$from_sha1" GW_TO="$to_sha1" \
+      GW_BRANCH="$BRANCH" GW_URL="$URL" sh -c "$CMD"
   done
 
-git --git-dir="$CACHE_DIR" show-ref -s "$BRANCH" \
-  > "$OLD_COMMIT_PATH" || die "gw: failed to get latest commit"
+git show-ref -s "$BRANCH" > "$OLD_COMMIT_PATH" ||
+  die "gw: failed to get latest commit"
