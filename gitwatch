@@ -54,9 +54,8 @@ then
 fi
 
 git rev-list --full-history --parents --first-parent \
-  "$(cat "$OLD_COMMIT_PATH")..$BRANCH" | grep ' ' |
-  cut -d' ' -f1,2 |
-  while read to_sha1 from_sha1
+  --min-parents=1 "$(cat "$OLD_COMMIT_PATH")..$BRANCH" |
+  while read to_sha1 from_sha1 x
   do
     git diff "$from_sha1".."$to_sha1" |
       GW_FROM="$from_sha1" GW_TO="$to_sha1" GW_GIT_DIR="$GIT_DIR" \
