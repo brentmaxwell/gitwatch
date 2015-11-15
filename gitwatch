@@ -35,19 +35,23 @@ mkdir -p $(dirname "$GIT_DIR") || die "gw: failed to create cache dir"
 
 if [ -d "$GIT_DIR" ]
 then
-  cd "$GIT_DIR" || die "gw: cannot cd to git dir"
-  git fetch origin "$BRANCH" 1>&2 || die "gw: git fetch failed"
+  git --git-dir="$GIT_DIR" fetch origin "$BRANCH" 1>&2 ||
+    die "gw: git fetch failed"
 else
   git clone --single-branch --bare --branch "$BRANCH" \
     -c remote.origin.fetch='+refs/heads/*:refs/heads/*' \
     "$URL" "$GIT_DIR" 1>&2 || die "gw: git clone failed"
-  git --git-dir="$GIT_DIR" show-ref -s "$BRANCH" > "$OLD_COMMIT_PATH" ||
-    die "gw: failed to get latest commit"
 fi
 
 # Diffing
 
 cd "$GIT_DIR" || die "gw: cannot cd to git dir"
+
+if [ ! -f "$OLD_COMMIT_PATH" ]
+then
+  git show-ref -s "$BRANCH" > "$OLD_COMMIT_PATH" ||
+    die "gw: failed to get latest commit"
+fi
 
 git rev-list --full-history --parents \
   "$(cat "$OLD_COMMIT_PATH")..$BRANCH" | grep ' ' |
