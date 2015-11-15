@@ -53,9 +53,9 @@ then
     die "gw: failed to get latest commit"
 fi
 
-git rev-list --full-history --parents \
+git rev-list --full-history --parents --first-parent \
   "$(cat "$OLD_COMMIT_PATH")..$BRANCH" | grep ' ' |
-  sed 's/^\([^ ]\+\) \([^ ]\+\) \([^ ]\+\)$/\1 \2\n\1 \3/' |
+  cut -d' ' -f1,2 |
   while read to_sha1 from_sha1
   do
     git diff "$from_sha1".."$to_sha1" |
