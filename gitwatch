@@ -26,7 +26,7 @@ function die { echo "$@" 1>&2; exit 1; }
 
 if [ "$GW_CACHE" = "" ]; then GW_CACHE=~/.cache/gitwatch; fi
 
-GIT_DIR="$GW_CACHE/$(echo -n "2:$URL" | md5sum | tr -cd 'a-f0-9')"
+GIT_DIR="$GW_CACHE/$(echo -n "3:$URL" | md5sum | tr -cd 'a-f0-9')"
 OLD_COMMIT_PATH="$GIT_DIR/old-commit-$BRANCH"
 
 # Updating local cache
@@ -35,10 +35,11 @@ mkdir -p $(dirname "$GIT_DIR") || die "gw: failed to create cache dir"
 
 if [ -d "$GIT_DIR" ]
 then
-  git --git-dir="$GIT_DIR" fetch origin "$BRANCH" 1>&2 ||
+  if [ ! -e "$OLD_COMMIT_PATH" ]; then DEPTH='--depth=1'; else DEPTH=; fi
+  git --git-dir="$GIT_DIR" $DEPTH fetch origin "$BRANCH" 1>&2 ||
     die "gw: git fetch failed"
 else
-  git clone --single-branch --bare --branch "$BRANCH" \
+  git clone --single-branch --bare --branch "$BRANCH" --depth=1 \
     -c remote.origin.fetch='+refs/heads/*:refs/heads/*' \
     "$URL" "$GIT_DIR" 1>&2 || die "gw: git clone failed"
 fi
